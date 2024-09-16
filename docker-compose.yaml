@@ -1,0 +1,29 @@
+version: '3.4'
+
+services:
+  app:
+    image: golang-project-template-app
+    container_name: golang-project-template-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    volumes:
+      - ./.bin/:/root/
+    env_file:
+      - .env
+
+  debug:
+    image: golang-project-template-debug
+    container_name: golang-project-template-debug
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
+    ports:
+      - "8000:8000"
+      - "2345:2345"
+    volumes:
+      - ./.bin/:/root/
+    env_file:
+      - .env
