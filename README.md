@@ -1,12 +1,17 @@
 # Proxy HTTP Server-Client
 
 ## Run & Build
-For run project
+Docker run
+```bash
+docker run -p 8080:8080 suchimauz/proxy-http-server-client:v1.0.0
+```
+
+Local run project
 ```bash
 make run
 ```
 
-For build project
+Local build project
 ```bash
 make build
 ```
