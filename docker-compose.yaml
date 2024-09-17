@@ -6,13 +6,11 @@ services:
     container_name: proxy-http-server-client-app
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - 8001:8080
     volumes:
       - ./.bin/:/root/
-    env_file:
-      - .env
 
   debug:
     image: proxy-http-server-client-debug
@@ -25,5 +23,3 @@ services:
       - "2345:2345"
     volumes:
       - ./.bin/:/root/
-    env_file:
-      - .env
