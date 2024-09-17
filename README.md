@@ -1,4 +1,4 @@
-# Proxy service for make http requests with http or socks5 proxy
+# Proxy HTTP Server-Client
 
 ## Run & Build
 For run project
