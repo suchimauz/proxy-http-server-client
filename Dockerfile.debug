@@ -13,4 +13,6 @@ COPY --from=build-env /go/bin/dlv /
 
 WORKDIR /root/
 
+EXPOSE 8080
+
 CMD ["/dlv", "--listen=:2345", "--headless=true", "--api-version=2", "exec", "./app"]

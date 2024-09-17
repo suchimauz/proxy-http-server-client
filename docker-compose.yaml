@@ -2,21 +2,21 @@ version: '3.4'
 
 services:
   app:
-    image: golang-project-template-app
-    container_name: golang-project-template-app
+    image: proxy-http-server-client-app
+    container_name: proxy-http-server-client-app
     build:
       context: .
       dockerfile: Dockerfile
     ports:
-      - 8000:8000
+      - 8001:8080
     volumes:
       - ./.bin/:/root/
     env_file:
       - .env
 
   debug:
-    image: golang-project-template-debug
-    container_name: golang-project-template-debug
+    image: proxy-http-server-client-debug
+    container_name: proxy-http-server-client-debug
     build:
       context: .
       dockerfile: Dockerfile.debug

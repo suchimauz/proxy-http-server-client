@@ -1,6 +1,6 @@
 package main
 
-import "github.com/suchimauz/golang-project-template/internal/app"
+import "github.com/suchimauz/proxy-http-server-client/internal/app"
 
 const configsDir = "configs"
 
