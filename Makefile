@@ -15,3 +15,4 @@ debug: build
 
 lint:
 	golangci-lint run
+
