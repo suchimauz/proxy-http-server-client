@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/darahayes/go-boom"
-	"github.com/suchimauz/proxy-http-server-client/internal/config"
 	"github.com/suchimauz/proxy-http-server-client/pkg/logger"
 
 	netProxy "golang.org/x/net/proxy"
@@ -45,6 +45,15 @@ var (
 	fmtProxyMin            = "%s://%s"
 	fmtProxyMinWithAuth    = "%s://%s:%s@%s"
 )
+
+func validateProxy(proxy *Proxy) error {
+	if proxy.ProxyType == "" {
+		return errors.New("request.proxy.type are required")
+	} else if proxy.Host == "" {
+		return errors.New("request.proxy.host are required")
+	}
+	return nil
+}
 
 func calcProxy(proxy *Proxy) (*http.Transport, error) {
 	var dialer netProxy.Dialer
@@ -144,6 +153,8 @@ func callRequest(request *HttpRequest) ([]byte, error) {
 		requestMethod = http.MethodPut
 	case "delete":
 		requestMethod = http.MethodDelete
+	case "patch":
+		requestMethod = http.MethodPatch
 	default:
 		return nil, fmt.Errorf("Unsupported request method: %s", m)
 	}
@@ -168,19 +179,19 @@ func callRequest(request *HttpRequest) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	var buf bytes.Buffer
-	if err = resp.Write(&buf); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
 
-	return buf.Bytes(), nil
+	return body, nil
 }
 
 func validateProxifyBody(body *HttpRequest) error {
 	if body.Url == "" {
-		return errors.New("body.url are required")
+		return errors.New("request.url are required")
 	} else if body.Method == "" {
-		return errors.New("body.method are required")
+		return errors.New("request.method are required")
 	}
 	return nil
 }
@@ -197,7 +208,7 @@ func proxifyHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Попытка декодировать JSON
 	if err := decoder.Decode(&body); err != nil {
-		boom.BadRequest(w, "Error parsing JSON")
+		boom.BadData(w, "Error parsing JSON")
 		return
 	}
 
@@ -222,20 +233,13 @@ func proxifyHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Кодирование JSON и отправка ответа
 	if err := json.NewEncoder(w).Encode(httpResponse); err != nil {
-		boom.BadRequest(w, "Error encoding JSON")
+		boom.BadData(w, "Error encoding JSON")
 	}
 }
 
 func Run() {
-	// Initialize config
-	_, err := config.NewConfig()
-	if err != nil {
-		logger.Errorf("[ENV] %s", err.Error())
-
-		return
-	}
-
 	http.HandleFunc("/proxify", proxifyHandler)
+	http.HandleFunc("/", (func(w http.ResponseWriter, r *http.Request) { boom.NotFound(w, "Page not Found!") }))
 
 	serverAddr := ":8080"
 	logger.Errorf("Starting server on %s...\n", serverAddr)
