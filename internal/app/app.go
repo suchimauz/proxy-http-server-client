@@ -47,15 +47,6 @@ var (
 	fmtProxyMinWithAuth    = "%s://%s:%s@%s"
 )
 
-func validateProxy(proxy *Proxy) error {
-	if proxy.ProxyType == "" {
-		return errors.New("request.proxy.type are required")
-	} else if proxy.Host == "" {
-		return errors.New("request.proxy.host are required")
-	}
-	return nil
-}
-
 func calcProxy(proxy *Proxy) (*http.Transport, error) {
 	var dialer netProxy.Dialer
 	var transport *http.Transport
@@ -186,10 +177,27 @@ func callRequest(request *HttpRequest) (*http.Response, error) {
 
 func validateProxifyBody(body *HttpRequest) error {
 	if body.Url == "" {
-		return errors.New("request.url are required")
-	} else if body.Method == "" {
-		return errors.New("request.method are required")
+		return errors.New("request.url is required")
 	}
+	if body.Method == "" {
+		return errors.New("request.method is required")
+	}
+
+	// Проверка наличия Proxy и его обязательных полей
+	if body.Proxy != nil {
+		if body.Proxy.Host == "" {
+			return errors.New("request.proxy.host is required")
+		}
+		if body.Proxy.ProxyType == "" {
+			return errors.New("request.proxy.type is required")
+		}
+	}
+
+	// Проверка допустимых типов ответа
+	if body.Type != "binary" && body.Type != "json" && body.Type != "" {
+		return fmt.Errorf("request.response_type = '%s' unsupported. Supported types: json, binary", body.Type)
+	}
+
 	return nil
 }
 
