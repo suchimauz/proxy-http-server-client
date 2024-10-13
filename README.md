@@ -23,12 +23,13 @@ POST /proxify
 ```
 Supported parameters:
 ```
-url:     required  # url
-method:  required  # request method | Supported methods: GET, POST, PUT, DELETE, PATCH
-params:  optional  # query parameters (will be converted to the <url>?key=value format)
-headers: optional  # request headers (key - value), for example: {"Authorization": "Bearer <token></token>"}
-body:    optional  # json request body (if necessary)
-proxy:   optional  # proxy for the request
+url:           required    # url
+method:        required    # request method | Supported methods: GET, POST, PUT, DELETE, PATCH
+params:        optional    # query parameters (will be converted to the <url>?key=value format)
+headers:       optional    # request headers (key - value), for example: {"Authorization": "Bearer <token></token>"}
+body:          optional    # json request body (if necessary)
+proxy:         optional    # proxy for the request
+response_type: optional    # response type | supported - binary, json. Default: json
 ```
 
 Example request body
@@ -71,6 +72,7 @@ Supported parameters
 type: required     # Supported types: http, socks5
 host: required     # IP or Domain address
 port: optional     # Port number | Integer
+
 # You can also fill out authorization for your proxy
 username: optional # Username for proxy authentication
 password: optional # Password for proxy authentication
@@ -139,3 +141,24 @@ Example proxy with only host (for example: http proxies)
   "host": "<ip>"
 }
 ```
+
+## Binary responses (images, files, etc...)
+
+Example for request image
+```json
+{
+    "url": "https://via.placeholder.com/150",
+    "method": "get",
+    "proxy": {
+      "type": "socks5",
+      "host": "<ip>",
+      "port": 12324,
+      "username": "<username>",
+      "password": "<password>"
+    }
+}
+```
+
+Response
+
+![Response image](https://via.placeholder.com/150)
