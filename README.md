@@ -3,7 +3,7 @@
 ## Run & Build
 Docker run
 ```bash
-docker run -p 8080:8080 suchimauz/proxy-http-server-client:v1.0.0
+docker run -p 8080:8080 suchimauz/proxy-http-server-client:v1.1.0
 ```
 
 Local run project
