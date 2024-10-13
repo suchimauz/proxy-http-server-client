@@ -28,6 +28,7 @@ type (
 	HttpRequest struct {
 		Url     string            `json:"url"`
 		Method  string            `json:"method"`
+		Type    string            `json:"response_type"`
 		Body    json.RawMessage   `json:"body"`
 		Headers map[string]string `json:"headers"`
 		Params  map[string]string `json:"params"`
@@ -114,7 +115,7 @@ func calcProxy(proxy *Proxy) (*http.Transport, error) {
 	return nil, nil
 }
 
-func callRequest(request *HttpRequest) ([]byte, error) {
+func callRequest(request *HttpRequest) (*http.Response, error) {
 	var httpClient *http.Client
 
 	transport, err := calcProxy(request.Proxy)
@@ -140,7 +141,9 @@ func callRequest(request *HttpRequest) ([]byte, error) {
 		requestParams.Add(k, v)
 	}
 
-	requestUrl.RawQuery = requestParams.Encode()
+	if len(requestParams) > 0 {
+		requestUrl.RawQuery = requestParams.Encode()
+	}
 
 	var requestMethod string
 
@@ -177,14 +180,8 @@ func callRequest(request *HttpRequest) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return body, nil
+	return resp, nil
 }
 
 func validateProxifyBody(body *HttpRequest) error {
@@ -202,7 +199,7 @@ func proxifyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var body *HttpRequest
+	var body HttpRequest
 	decoder := json.NewDecoder(r.Body)
 	defer r.Body.Close()
 
@@ -213,27 +210,46 @@ func proxifyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Проверка тела на обязательные параметры
-	if err := validateProxifyBody(body); err != nil {
+	if err := validateProxifyBody(&body); err != nil {
 		boom.BadRequest(w, err.Error())
 		return
 	}
 
-	respBytes, err := callRequest(body)
+	resp, err := callRequest(&body)
 	if err != nil {
 		boom.BadRequest(w, err.Error())
+		return
+	}
+	defer resp.Body.Close() // Закрываем тело ответа
+
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		boom.BadData(w, "Error reading response body")
+		return
 	}
 
-	httpResponse := &HttpResponse{
-		Request:  body,
-		Response: respBytes,
-	}
+	if body.Type == "binary" {
+		// Установка заголовка Content-Type
+		w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
 
-	// Установка заголовка Content-Type
-	w.Header().Set("Content-Type", "application/json")
+		// Копируем данные ответа в тело ответа
+		_, err = w.Write(respBytes)
+		if err != nil {
+			boom.BadData(w, "Unable to write binary")
+		}
+	} else {
+		httpResponse := &HttpResponse{
+			Request:  &body,
+			Response: respBytes,
+		}
 
-	// Кодирование JSON и отправка ответа
-	if err := json.NewEncoder(w).Encode(httpResponse); err != nil {
-		boom.BadData(w, "Error encoding JSON")
+		// Установка заголовка Content-Type
+		w.Header().Set("Content-Type", "application/json")
+
+		// Кодирование JSON и отправка ответа
+		if err := json.NewEncoder(w).Encode(httpResponse); err != nil {
+			boom.BadData(w, "Error encoding JSON")
+		}
 	}
 }
 
