@@ -149,6 +149,7 @@ Example for request image
 {
     "url": "https://via.placeholder.com/150",
     "method": "get",
+    "response_type": "binary",
     "proxy": {
       "type": "socks5",
       "host": "<ip>",
